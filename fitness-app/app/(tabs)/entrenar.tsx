@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { StyleSheet, ScrollView, View, Text, Pressable, TextInput, Modal, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, ScrollView, View, Text, Pressable, TextInput, Modal, FlatList, Alert } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
 
 const mockExercisesCatalog = [
   { id: 1, name: 'Press de Banca' },
@@ -14,6 +16,15 @@ const mockExercisesCatalog = [
 ];
 
 export default function EntrenarScreen() {
+  const router = useRouter();
+  const [startTime, setStartTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (!startTime) {
+      setStartTime(new Date());
+    }
+  }, []);
+
   const [exercises, setExercises] = useState([
     {
       id: 'e1',
@@ -106,6 +117,76 @@ export default function EntrenarScreen() {
     setExercises(prev => prev.filter(ex => ex.id !== exerciseId));
   };
 
+  const handleFinishWorkout = async () => {
+    let totalVolume = 0;
+    const completedExercises: any[] = [];
+
+    exercises.forEach(ex => {
+      const completedSets = ex.sets.filter(s => s.completed && s.weight && s.reps).map(s => {
+        const weightNum = parseFloat(s.weight);
+        const repsNum = parseInt(s.reps, 10);
+        totalVolume += weightNum * repsNum;
+        return {
+          id: s.id,
+          reps: repsNum,
+          weight: weightNum,
+          completed: true
+        };
+      });
+
+      if (completedSets.length > 0) {
+        completedExercises.push({
+          id: ex.id,
+          name: ex.name,
+          sets: completedSets
+        });
+      }
+    });
+
+    if (completedExercises.length === 0) {
+      Alert.alert("Error", "Debes completar al menos una serie para guardar el entrenamiento.");
+      return;
+    }
+
+    const endTime = new Date();
+    const durationSeconds = startTime ? Math.floor((endTime.getTime() - startTime.getTime()) / 1000) : 0;
+    
+    // Formatting the date nicely
+    const dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
+    const formattedDate = endTime.toLocaleDateString('es-ES', dateOptions);
+
+    const workout = {
+      id: Date.now().toString(),
+      name: 'Día de Entrenamiento',
+      date: formattedDate,
+      duration: durationSeconds,
+      volume: totalVolume,
+      exercises: completedExercises,
+      prs: Math.floor(Math.random() * 3) // Mocking PRs for now
+    };
+
+    try {
+      // 1. Obtener sesiones existentes
+      const storedWorkouts = await AsyncStorage.getItem('workouts');
+      const parsedWorkouts = storedWorkouts ? JSON.parse(storedWorkouts) : [];
+      
+      // 2. Agregar la nueva sesión sin borrar las anteriores
+      const newWorkoutsList = [workout, ...parsedWorkouts];
+      
+      // 3. Guardar usando la clave "workouts"
+      await AsyncStorage.setItem('workouts', JSON.stringify(newWorkoutsList));
+      
+      // Reset state
+      setExercises([]);
+      setStartTime(new Date());
+      
+      router.push('/historial');
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      Alert.alert("Error", "No se pudo guardar el entrenamiento.");
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -177,7 +258,7 @@ export default function EntrenarScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Pressable style={styles.finishButton}>
+        <Pressable style={styles.finishButton} onPress={handleFinishWorkout}>
           <Text style={styles.finishButtonText}>Finalizar Entrenamiento</Text>
         </Pressable>
       </View>

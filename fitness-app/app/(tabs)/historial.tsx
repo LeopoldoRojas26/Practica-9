@@ -1,24 +1,71 @@
+import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, ScrollView, View, Text, Pressable } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter, useFocusEffect } from 'expo-router';
 
 export default function HistorialScreen() {
-  const mockHistory = [
-    { id: 1, name: 'Día de Pecho y Tríceps', date: 'Ayer, 18:30', duration: '1h 15m', volume: '4,520 kg', prs: 2 },
-    { id: 2, name: 'Espalda y Bíceps', date: '2 Mayo, 19:00', duration: '1h 5m', volume: '3,800 kg', prs: 0 },
-    { id: 3, name: 'Pierna Completa', date: '30 Abril, 17:45', duration: '1h 30m', volume: '6,100 kg', prs: 1 },
-    { id: 4, name: 'Hombro y Core', date: '28 Abril, 08:00', duration: '55m', volume: '2,900 kg', prs: 0 },
-  ];
+  const [workouts, setWorkouts] = useState<any[]>([]);
+  const router = useRouter();
+
+  const loadWorkouts = async () => {
+    try {
+      const storedWorkouts = await AsyncStorage.getItem('workouts');
+      if (storedWorkouts) {
+        setWorkouts(JSON.parse(storedWorkouts));
+      }
+    } catch (error) {
+      console.error('Error loading workouts:', error);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadWorkouts();
+    }, [])
+  );
+
+  const clearHistory = async () => {
+    try {
+      await AsyncStorage.removeItem('workouts');
+      setWorkouts([]);
+    } catch (error) {
+      console.error('Error clearing history:', error);
+    }
+  };
+
+  const formatDuration = (seconds: number) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    if (hrs > 0) return `${hrs}h ${mins}m`;
+    return `${mins}m`;
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Tu Historial</Text>
-        <Text style={styles.subtitle}>Mayo 2026</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.title}>Tu Historial</Text>
+          {workouts.length > 0 && (
+            <Pressable onPress={clearHistory}>
+              <Text style={styles.clearText}>Limpiar</Text>
+            </Pressable>
+          )}
+        </View>
+        <Text style={styles.subtitle}>{workouts.length} entrenamientos</Text>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
-        {mockHistory.map((workout) => (
-          <Pressable key={workout.id} style={styles.card}>
+        {workouts.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No tienes entrenamientos guardados aún.</Text>
+          </View>
+        ) : workouts.map((workout) => (
+          <Pressable 
+            key={workout.id} 
+            style={styles.card}
+            onPress={() => router.push(`/historial/${workout.id}`)}
+          >
             <View style={styles.cardHeader}>
               <View style={styles.cardIcon}>
                 <IconSymbol name="figure.run" size={24} color="#4A90E2" />
@@ -33,11 +80,11 @@ export default function HistorialScreen() {
             <View style={styles.cardStats}>
               <View style={styles.statItem}>
                 <IconSymbol name="timer" size={16} color="#666" />
-                <Text style={styles.statText}>{workout.duration}</Text>
+                <Text style={styles.statText}>{formatDuration(workout.duration)}</Text>
               </View>
               <View style={styles.statItem}>
                 <IconSymbol name="list.bullet" size={16} color="#666" />
-                <Text style={styles.statText}>{workout.volume}</Text>
+                <Text style={styles.statText}>{workout.volume.toLocaleString()} kg</Text>
               </View>
               {workout.prs > 0 && (
                 <View style={styles.prBadge}>
@@ -64,10 +111,20 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EAEAEA',
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#1A1A1A',
+  },
+  clearText: {
+    color: '#FF3B30',
+    fontSize: 16,
+    fontWeight: '600',
   },
   subtitle: {
     fontSize: 16,
@@ -80,6 +137,15 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     gap: 16,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 40,
+  },
+  emptyText: {
+    color: '#666',
+    fontSize: 16,
   },
   card: {
     backgroundColor: '#fff',
