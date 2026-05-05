@@ -1,9 +1,61 @@
+import React, { useState, useCallback } from 'react';
 import { StyleSheet, ScrollView, View, Text, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useAppContext } from '@/app/context/AppContext';
+import { EXERCISES } from '@/app/(tabs)/ejercicios';
+import { ProgresoModal } from '@/components/ProgresoModal';
 
 export default function InicioScreen() {
   const router = useRouter();
+  const { timerTimeLeft, isTimerActive, isWorkoutActive, workoutName, workoutStartTime } = useAppContext();
+  
+  const [workoutsCount, setWorkoutsCount] = useState(0);
+  const [activeMinutes, setActiveMinutes] = useState(0);
+  const [lastWorkoutDate, setLastWorkoutDate] = useState('Ninguno');
+  const [progresoVisible, setProgresoVisible] = useState(false);
+
+  const loadStats = async () => {
+    try {
+      const storedWorkouts = await AsyncStorage.getItem('workouts');
+      if (storedWorkouts) {
+        const parsedWorkouts = JSON.parse(storedWorkouts);
+        
+        const totalSeconds = parsedWorkouts.reduce((acc: number, w: any) => acc + (w.duration || 0), 0);
+        setActiveMinutes(Math.floor(totalSeconds / 60));
+        
+        setWorkoutsCount(parsedWorkouts.length);
+
+        if (parsedWorkouts.length > 0) {
+          setLastWorkoutDate(parsedWorkouts[0].date);
+        } else {
+          setLastWorkoutDate('Ninguno');
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      loadStats();
+    }, [])
+  );
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const getWorkoutTimeStr = () => {
+    if (!workoutStartTime) return '';
+    const now = new Date();
+    const diffMins = Math.floor((now.getTime() - workoutStartTime.getTime()) / 60000);
+    return `${diffMins} min`;
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -14,11 +66,11 @@ export default function InicioScreen() {
 
       <View style={styles.statsContainer}>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>4</Text>
-          <Text style={styles.statLabel}>Entrenos esta sem.</Text>
+          <Text style={styles.statNumber}>{workoutsCount}</Text>
+          <Text style={styles.statLabel}>Entrenos totales</Text>
         </View>
         <View style={styles.statBox}>
-          <Text style={styles.statNumber}>320</Text>
+          <Text style={styles.statNumber}>{activeMinutes}</Text>
           <Text style={styles.statLabel}>Minutos activos</Text>
         </View>
       </View>
@@ -28,21 +80,23 @@ export default function InicioScreen() {
       <View style={styles.cardsContainer}>
         <Pressable style={[styles.card, styles.cardPrimary]} onPress={() => router.push('/entrenar')}>
           <IconSymbol name="figure.run" size={32} color="#fff" />
-          <Text style={styles.cardTitleLight}>Empezar a Entrenar</Text>
-          <Text style={styles.cardSubLight}>Día de Pierna - 45 min</Text>
+          <Text style={styles.cardTitleLight}>{isWorkoutActive ? 'Entrenamiento Activo' : 'Empezar a Entrenar'}</Text>
+          <Text style={styles.cardSubLight}>
+            {isWorkoutActive ? `${workoutName} - ${getWorkoutTimeStr()}` : 'Explorar Rutinas'}
+          </Text>
         </Pressable>
 
         <View style={styles.rowCards}>
           <Pressable style={styles.cardSmall} onPress={() => router.push('/historial')}>
             <IconSymbol name="clock.fill" size={28} color="#4A90E2" />
             <Text style={styles.cardTitle}>Historial</Text>
-            <Text style={styles.cardSub}>Último: Ayer</Text>
+            <Text style={styles.cardSub} numberOfLines={1}>Último: {lastWorkoutDate}</Text>
           </Pressable>
 
           <Pressable style={styles.cardSmall} onPress={() => router.push('/ejercicios')}>
             <IconSymbol name="list.bullet" size={28} color="#E24A75" />
             <Text style={styles.cardTitle}>Ejercicios</Text>
-            <Text style={styles.cardSub}>Explorar</Text>
+            <Text style={styles.cardSub}>{EXERCISES.length} disponibles</Text>
           </Pressable>
         </View>
 
@@ -50,13 +104,31 @@ export default function InicioScreen() {
           <View style={styles.descansoLeft}>
             <IconSymbol name="timer" size={28} color="#F39C12" />
             <View style={styles.descansoText}>
-              <Text style={styles.cardTitle}>Descanso Actual</Text>
-              <Text style={styles.cardSub}>Recuperación óptima</Text>
+              <Text style={styles.cardTitle}>Descanso {isTimerActive ? 'Activo' : 'Actual'}</Text>
+              <Text style={styles.cardSub}>{isTimerActive ? 'Cuenta regresiva...' : 'Recuperación óptima'}</Text>
             </View>
           </View>
-          <Text style={styles.descansoTime}>00:00</Text>
+          <Text style={[styles.descansoTime, isTimerActive && { color: '#E74C3C' }]}>{formatTime(timerTimeLeft)}</Text>
         </Pressable>
+
+        <Pressable style={styles.cardProgreso} onPress={() => setProgresoVisible(true)}>
+          <View style={styles.progresoLeft}>
+            <IconSymbol name="chart.xyaxis.line" size={28} color="#9B59B6" />
+            <View style={styles.progresoText}>
+              <Text style={styles.cardTitle}>Tu Progreso</Text>
+              <Text style={styles.cardSub}>Peso, medidas y fotos</Text>
+            </View>
+          </View>
+          <IconSymbol name="chevron.right" size={24} color="#ccc" />
+        </Pressable>
+
       </View>
+
+      <ProgresoModal 
+        visible={progresoVisible} 
+        onClose={() => setProgresoVisible(false)} 
+      />
+
     </ScrollView>
   );
 }
@@ -198,5 +270,26 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#F39C12',
+  },
+  cardProgreso: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  progresoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  progresoText: {
+    justifyContent: 'center',
   },
 });

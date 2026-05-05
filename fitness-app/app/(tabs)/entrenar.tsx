@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, View, Text, Pressable, TextInput, Modal, FlatList, Alert } from 'react-native';
+import { StyleSheet, ScrollView, View, Text, Pressable, TextInput, Modal, FlatList, Alert, Animated } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Swipeable } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import { useAppContext } from '@/app/context/AppContext';
 
 const mockExercisesCatalog = [
   { id: 1, name: 'Press de Banca' },
@@ -17,13 +19,13 @@ const mockExercisesCatalog = [
 
 export default function EntrenarScreen() {
   const router = useRouter();
-  const [startTime, setStartTime] = useState<Date | null>(null);
+  const { isWorkoutActive, workoutStartTime, startWorkout, endWorkout } = useAppContext();
 
   useEffect(() => {
-    if (!startTime) {
-      setStartTime(new Date());
+    if (!isWorkoutActive) {
+      startWorkout('Día de Pierna');
     }
-  }, []);
+  }, [isWorkoutActive]);
 
   const [exercises, setExercises] = useState([
     {
@@ -149,7 +151,7 @@ export default function EntrenarScreen() {
     }
 
     const endTime = new Date();
-    const durationSeconds = startTime ? Math.floor((endTime.getTime() - startTime.getTime()) / 1000) : 0;
+    const durationSeconds = workoutStartTime ? Math.floor((endTime.getTime() - workoutStartTime.getTime()) / 1000) : 0;
     
     // Formatting the date nicely
     const dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
@@ -178,7 +180,7 @@ export default function EntrenarScreen() {
       
       // Reset state
       setExercises([]);
-      setStartTime(new Date());
+      endWorkout();
       
       router.push('/historial');
     } catch (error) {
@@ -211,40 +213,64 @@ export default function EntrenarScreen() {
               <Text style={styles.colCheck}>✓</Text>
             </View>
 
-            {exercise.sets.map((set) => (
-              <View key={set.id} style={set.completed ? styles.rowCompleted : styles.rowPending}>
-                <Pressable onPress={() => removeSet(exercise.id, set.id)} style={{ flex: 1, alignItems: 'center' }}>
-                  <Text style={styles.cellSet}>{set.setNumber}</Text>
-                </Pressable>
+            {exercise.sets.map((set) => {
+              const renderRightActions = (progress: any, dragX: any) => {
+                const trans = dragX.interpolate({
+                  inputRange: [-80, 0],
+                  outputRange: [1, 0],
+                  extrapolate: 'clamp',
+                });
+                return (
+                  <Pressable style={styles.deleteAction} onPress={() => removeSet(exercise.id, set.id)}>
+                    <Animated.View style={{ transform: [{ scale: trans }] }}>
+                      <IconSymbol name="trash" size={24} color="#fff" />
+                    </Animated.View>
+                  </Pressable>
+                );
+              };
 
-                <TextInput
-                  style={[styles.inputCell, styles.cellWeight, set.completed && styles.inputCompleted]}
-                  value={set.weight}
-                  onChangeText={(val) => updateSet(exercise.id, set.id, 'weight', val)}
-                  keyboardType="numeric"
-                  placeholder="-"
-                  placeholderTextColor="#999"
-                  editable={!set.completed}
-                />
-
-                <TextInput
-                  style={[styles.inputCell, styles.cellReps, set.completed && styles.inputCompleted]}
-                  value={set.reps}
-                  onChangeText={(val) => updateSet(exercise.id, set.id, 'reps', val)}
-                  keyboardType="numeric"
-                  placeholder="-"
-                  placeholderTextColor="#999"
-                  editable={!set.completed}
-                />
-
-                <Pressable
-                  style={set.completed ? styles.checkDone : styles.checkPending}
-                  onPress={() => toggleSetComplete(exercise.id, set.id)}
+              return (
+                <Swipeable
+                  key={set.id}
+                  renderRightActions={renderRightActions}
+                  overshootRight={false}
+                  friction={2}
                 >
-                  <IconSymbol name={set.completed ? "checkmark" : "timer"} size={14} color={set.completed ? "#fff" : "#666"} />
-                </Pressable>
-              </View>
-            ))}
+                  <View style={set.completed ? styles.rowCompleted : styles.rowPending}>
+                    <View style={{ flex: 1, alignItems: 'center' }}>
+                      <Text style={styles.cellSet}>{set.setNumber}</Text>
+                    </View>
+
+                    <TextInput
+                      style={[styles.inputCell, styles.cellWeight, set.completed && styles.inputCompleted]}
+                      value={set.weight}
+                      onChangeText={(val) => updateSet(exercise.id, set.id, 'weight', val)}
+                      keyboardType="numeric"
+                      placeholder="-"
+                      placeholderTextColor="#999"
+                      editable={!set.completed}
+                    />
+
+                    <TextInput
+                      style={[styles.inputCell, styles.cellReps, set.completed && styles.inputCompleted]}
+                      value={set.reps}
+                      onChangeText={(val) => updateSet(exercise.id, set.id, 'reps', val)}
+                      keyboardType="numeric"
+                      placeholder="-"
+                      placeholderTextColor="#999"
+                      editable={!set.completed}
+                    />
+
+                    <Pressable
+                      style={set.completed ? styles.checkDone : styles.checkPending}
+                      onPress={() => toggleSetComplete(exercise.id, set.id)}
+                    >
+                      <IconSymbol name={set.completed ? "checkmark" : "timer"} size={14} color={set.completed ? "#fff" : "#666"} />
+                    </Pressable>
+                  </View>
+                </Swipeable>
+              );
+            })}
 
             <Pressable style={styles.addSetButton} onPress={() => addSet(exercise.id)}>
               <Text style={styles.addSetText}>+ Añadir serie</Text>
@@ -416,6 +442,15 @@ const styles = StyleSheet.create({
     maxWidth: 28,
     borderRadius: 14,
     marginHorizontal: 'auto',
+  },
+  deleteAction: {
+    backgroundColor: '#FF3B30',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    marginVertical: 4,
+    borderRadius: 8,
+    marginLeft: 8,
   },
 
   addSetButton: {

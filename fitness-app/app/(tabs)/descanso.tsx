@@ -1,9 +1,48 @@
-import { StyleSheet, View, Text, Pressable, Dimensions } from 'react-native';
+import React, { useState } from 'react';
+import { StyleSheet, View, Text, Pressable, Dimensions, ScrollView, Modal, TextInput } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useAppContext } from '@/app/context/AppContext';
 
 const { width } = Dimensions.get('window');
 
 export default function DescansoScreen() {
+  const { 
+    timerTimeLeft, 
+    isTimerActive, 
+    startTimer, 
+    pauseTimer, 
+    resetTimer, 
+    addTimerTime, 
+    setTimerTime 
+  } = useAppContext();
+
+  const [customModalVisible, setCustomModalVisible] = useState(false);
+  const [customMin, setCustomMin] = useState('');
+  const [customSec, setCustomSec] = useState('');
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleSetCustomTime = () => {
+    const m = parseInt(customMin) || 0;
+    const s = parseInt(customSec) || 0;
+    setTimerTime(m * 60 + s);
+    setCustomModalVisible(false);
+    setCustomMin('');
+    setCustomSec('');
+  };
+
+  const PRESETS = [
+    { label: '30s', value: 30 },
+    { label: '60s', value: 60 },
+    { label: '90s', value: 90 },
+    { label: '2m', value: 120 },
+    { label: '3m', value: 180 },
+  ];
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -15,28 +54,50 @@ export default function DescansoScreen() {
         
         {/* Timer Circle */}
         <View style={styles.timerCircle}>
-          <Text style={styles.timerText}>01:30</Text>
+          <Text style={styles.timerText}>{formatTime(timerTimeLeft)}</Text>
           <Text style={styles.timerLabel}>Restante</Text>
         </View>
 
         {/* Adjust Time Controls */}
         <View style={styles.controlsContainer}>
-          <Pressable style={styles.adjustButton}>
-            <Text style={styles.adjustText}>-30s</Text>
-          </Pressable>
-          <Pressable style={styles.adjustButton}>
+          <Pressable style={styles.adjustButton} onPress={() => addTimerTime(30)}>
             <Text style={styles.adjustText}>+30s</Text>
           </Pressable>
+          <Pressable style={styles.adjustButton} onPress={() => addTimerTime(60)}>
+            <Text style={styles.adjustText}>+1min</Text>
+          </Pressable>
+        </View>
+
+        {/* Presets */}
+        <View style={styles.presetsWrapper}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.presetsContent}>
+            {PRESETS.map((preset) => (
+              <Pressable 
+                key={preset.label} 
+                style={styles.presetButton} 
+                onPress={() => setTimerTime(preset.value)}
+              >
+                <Text style={styles.presetText}>{preset.label}</Text>
+              </Pressable>
+            ))}
+            <Pressable style={styles.presetButton} onPress={() => setCustomModalVisible(true)}>
+              <Text style={styles.presetText}>Personalizado</Text>
+            </Pressable>
+          </ScrollView>
         </View>
 
         {/* Action Buttons */}
         <View style={styles.actionContainer}>
-          <Pressable style={styles.mainButton}>
-            <IconSymbol name="timer" size={24} color="#fff" />
-            <Text style={styles.mainButtonText}>Pausar</Text>
+          <Pressable 
+            style={[styles.mainButton, isTimerActive ? styles.pauseButton : styles.startButton]} 
+            onPress={() => isTimerActive ? pauseTimer() : startTimer()}
+          >
+            <IconSymbol name={isTimerActive ? "pause.fill" : "play.fill"} size={24} color="#fff" />
+            <Text style={styles.mainButtonText}>{isTimerActive ? 'Pausar' : 'Iniciar'}</Text>
           </Pressable>
-          <Pressable style={[styles.mainButton, styles.skipButton]}>
-            <Text style={styles.skipButtonText}>Omitir</Text>
+          <Pressable style={[styles.mainButton, styles.resetButton]} onPress={resetTimer}>
+            <IconSymbol name="arrow.counterclockwise" size={24} color="#333" />
+            <Text style={styles.resetButtonText}>Reiniciar</Text>
           </Pressable>
         </View>
 
@@ -50,6 +111,43 @@ export default function DescansoScreen() {
         </View>
 
       </View>
+
+      {/* Custom Time Modal */}
+      <Modal visible={customModalVisible} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Tiempo Personalizado</Text>
+            <View style={styles.inputRow}>
+              <TextInput 
+                style={styles.input} 
+                keyboardType="numeric" 
+                placeholder="00" 
+                maxLength={2}
+                value={customMin} 
+                onChangeText={setCustomMin} 
+              />
+              <Text style={styles.colon}>:</Text>
+              <TextInput 
+                style={styles.input} 
+                keyboardType="numeric" 
+                placeholder="00" 
+                maxLength={2}
+                value={customSec} 
+                onChangeText={setCustomSec} 
+              />
+            </View>
+            <View style={styles.modalActions}>
+              <Pressable onPress={() => setCustomModalVisible(false)} style={styles.modalButton}>
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </Pressable>
+              <Pressable onPress={handleSetCustomTime} style={[styles.modalButton, styles.modalButtonPrimary]}>
+                <Text style={styles.modalButtonTextPrimary}>Aceptar</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -145,13 +243,38 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  skipButton: {
+  startButton: {
+    backgroundColor: '#4A90E2', // Blue
+  },
+  pauseButton: {
+    backgroundColor: '#F39C12', // Orange
+  },
+  resetButton: {
     backgroundColor: '#EAEAEA',
   },
-  skipButtonText: {
+  resetButtonText: {
     color: '#333',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  presetsWrapper: {
+    width: '100%',
+    marginBottom: 30,
+  },
+  presetsContent: {
+    gap: 12,
+    paddingHorizontal: 4,
+  },
+  presetButton: {
+    backgroundColor: '#EAEAEA',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  presetText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
   },
   upcomingBox: {
     width: '100%',
@@ -185,5 +308,69 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#4A90E2',
     fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    width: '80%',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    color: '#1A1A1A',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 24,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 12,
+    fontSize: 24,
+    padding: 12,
+    width: 60,
+    textAlign: 'center',
+  },
+  colon: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 16,
+    width: '100%',
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+  },
+  modalButtonPrimary: {
+    backgroundColor: '#4A90E2',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#666',
+  },
+  modalButtonTextPrimary: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
   },
 });
