@@ -14,6 +14,9 @@ type Exercise = {
   secondaryMuscles: string[];
   benefits: string;
   level: 'Principiante' | 'Intermedio' | 'Avanzado';
+  tips?: string[];
+  suggestedWeight?: string;
+  suggestedReps?: string;
 };
 
 export const EXERCISES: Exercise[] = [
@@ -26,7 +29,10 @@ export const EXERCISES: Exercise[] = [
     primaryMuscles: ['Pectoral mayor'],
     secondaryMuscles: ['Tríceps', 'Deltoides anterior'],
     benefits: 'Desarrolla la fuerza y el tamaño de la parte superior del cuerpo.',
-    level: 'Intermedio'
+    level: 'Intermedio',
+    tips: ['Mantén los pies firmes en el suelo', 'Retrae las escápulas (junta los omóplatos)', 'La barra debe tocar la parte inferior del pecho'],
+    suggestedWeight: 'Hombres: 40-60kg | Mujeres: 20-30kg (o barra sola)',
+    suggestedReps: '3-4 series de 8-12 repeticiones'
   },
   {
     id: '2',
@@ -37,7 +43,10 @@ export const EXERCISES: Exercise[] = [
     primaryMuscles: ['Pectoral mayor'],
     secondaryMuscles: ['Tríceps', 'Deltoides anterior', 'Core'],
     benefits: 'Mejora la fuerza del tren superior sin necesidad de equipamiento.',
-    level: 'Principiante'
+    level: 'Principiante',
+    tips: ['Mantén el core apretado para no curvar la espalda baja', 'Los codos deben ir a unos 45 grados respecto a tu torso', 'Evita dejar caer la cabeza'],
+    suggestedWeight: 'Peso corporal',
+    suggestedReps: '3 series al fallo o 10-15 repeticiones'
   },
   {
     id: '3',
@@ -48,7 +57,10 @@ export const EXERCISES: Exercise[] = [
     primaryMuscles: ['Dorsal ancho'],
     secondaryMuscles: ['Bíceps', 'Romboides'],
     benefits: 'Excelente para desarrollar la amplitud y fuerza de la espalda.',
-    level: 'Intermedio'
+    level: 'Intermedio',
+    tips: ['Usa un rango de movimiento completo, estirando bien los brazos al bajar', 'Inicia el movimiento tirando de los codos hacia abajo y atrás', 'Trata de llevar el pecho a la barra'],
+    suggestedWeight: 'Peso corporal (usar banda elástica o máquina asistida si es difícil)',
+    suggestedReps: '3 series de 5-10 repeticiones'
   },
   {
     id: '4',
@@ -59,7 +71,10 @@ export const EXERCISES: Exercise[] = [
     primaryMuscles: ['Dorsal ancho', 'Romboides'],
     secondaryMuscles: ['Bíceps', 'Erectores espinales'],
     benefits: 'Añade grosor a la espalda y mejora la postura.',
-    level: 'Intermedio'
+    level: 'Intermedio',
+    tips: ['Mantén la espalda recta casi paralela al suelo', 'Tira de los codos hacia atrás rozando las costillas', 'Controla el peso al bajar'],
+    suggestedWeight: 'Hombres: 30-50kg | Mujeres: 15-25kg',
+    suggestedReps: '3 series de 8-12 repeticiones'
   },
   {
     id: '5',
@@ -70,7 +85,10 @@ export const EXERCISES: Exercise[] = [
     primaryMuscles: ['Cuádriceps', 'Glúteos'],
     secondaryMuscles: ['Isquiotibiales', 'Core'],
     benefits: 'El ejercicio rey para el desarrollo general de las piernas y fuerza del core.',
-    level: 'Intermedio'
+    level: 'Intermedio',
+    tips: ['Mantén la mirada al frente y el pecho levantado', 'Abre ligeramente las puntas de los pies y empuja las rodillas hacia afuera al bajar', 'El peso debe apoyarse en la parte media del pie y los talones'],
+    suggestedWeight: 'Hombres: 40-70kg | Mujeres: 20-40kg',
+    suggestedReps: '3-4 series de 8-12 repeticiones'
   },
   {
     id: '6',
@@ -81,7 +99,10 @@ export const EXERCISES: Exercise[] = [
     primaryMuscles: ['Cuádriceps'],
     secondaryMuscles: ['Glúteos', 'Isquiotibiales'],
     benefits: 'Permite mover mucho peso de forma segura para las piernas.',
-    level: 'Principiante'
+    level: 'Principiante',
+    tips: ['Baja hasta que tus rodillas formen un ángulo de 90 grados', 'NUNCA bloquees (hiperextiendas) las rodillas al estirar las piernas', 'Empuja principalmente con los talones'],
+    suggestedWeight: 'Hombres: 80-120kg | Mujeres: 40-80kg',
+    suggestedReps: '3-4 series de 10-15 repeticiones'
   },
   {
     id: '7',
@@ -92,7 +113,10 @@ export const EXERCISES: Exercise[] = [
     primaryMuscles: ['Deltoides anterior', 'Deltoides medio'],
     secondaryMuscles: ['Tríceps', 'Core'],
     benefits: 'Desarrolla hombros fuertes y mejora la fuerza de empuje vertical.',
-    level: 'Intermedio'
+    level: 'Intermedio',
+    tips: ['Aprieta glúteos y abdomen para proteger tu zona lumbar', 'La barra debe subir en línea recta, pasando muy cerca de la cara', 'Mete ligeramente la cabeza debajo de la barra al finalizar el empuje'],
+    suggestedWeight: 'Hombres: 20-40kg | Mujeres: 10-20kg',
+    suggestedReps: '3 series de 8-10 repeticiones'
   },
   {
     id: '8',
@@ -103,7 +127,10 @@ export const EXERCISES: Exercise[] = [
     primaryMuscles: ['Deltoides medio'],
     secondaryMuscles: ['Trapecio'],
     benefits: 'Aísla el hombro lateral para dar un aspecto más ancho.',
-    level: 'Principiante'
+    level: 'Principiante',
+    tips: ['Imagina que estás sirviendo agua de unas jarras en el punto más alto', 'Mantén una ligera flexión en los codos', 'No uses impulso con tu espalda, si balanceas baja el peso'],
+    suggestedWeight: 'Hombres: 5-10kg (por mano) | Mujeres: 2.5-5kg (por mano)',
+    suggestedReps: '3-4 series de 12-15 repeticiones'
   },
   {
     id: '9',
@@ -114,7 +141,10 @@ export const EXERCISES: Exercise[] = [
     primaryMuscles: ['Bíceps braquial'],
     secondaryMuscles: ['Braquial', 'Antebrazos'],
     benefits: 'Desarrolla el tamaño y fuerza de los bíceps.',
-    level: 'Principiante'
+    level: 'Principiante',
+    tips: ['Mantén los codos fijos a los lados de tu torso, no los subas', 'Controla mucho la fase de bajada (fase excéntrica)', 'Evita balancear el cuerpo hacia atrás al subir el peso'],
+    suggestedWeight: 'Hombres: 10-15kg (por mano) | Mujeres: 5-8kg (por mano)',
+    suggestedReps: '3 series de 10-12 repeticiones'
   },
   {
     id: '10',
@@ -125,7 +155,10 @@ export const EXERCISES: Exercise[] = [
     primaryMuscles: ['Tríceps braquial'],
     secondaryMuscles: [],
     benefits: 'Aísla el tríceps para mejorar el empuje y dar volumen al brazo.',
-    level: 'Principiante'
+    level: 'Principiante',
+    tips: ['Mantén los codos pegados a tus costillas en todo momento', 'Al final del recorrido (abajo), separa un poco los extremos de la cuerda si usas ese agarre', 'Sube lentamente resistiendo el peso'],
+    suggestedWeight: 'Hombres: 15-25kg | Mujeres: 10-15kg',
+    suggestedReps: '3 series de 12-15 repeticiones'
   },
   {
     id: '11',
@@ -136,7 +169,10 @@ export const EXERCISES: Exercise[] = [
     primaryMuscles: ['Recto abdominal', 'Transverso abdominal'],
     secondaryMuscles: ['Hombros', 'Glúteos'],
     benefits: 'Mejora la estabilidad del core y la resistencia isométrica.',
-    level: 'Principiante'
+    level: 'Principiante',
+    tips: ['Mantén una línea recta desde la cabeza hasta los talones', 'No dejes caer la cadera ni la eleves demasiado', 'Respira de manera normal y constante, apretando fuerte el abdomen'],
+    suggestedWeight: 'Peso corporal',
+    suggestedReps: '3 series de 30-60 segundos'
   },
   {
     id: '12',
@@ -147,7 +183,10 @@ export const EXERCISES: Exercise[] = [
     primaryMuscles: ['Recto abdominal'],
     secondaryMuscles: ['Oblicuos'],
     benefits: 'Ejercicio básico para la activación de la parte frontal del abdomen.',
-    level: 'Principiante'
+    level: 'Principiante',
+    tips: ['Concéntrate en apretar el abdomen, NO tires de tu cuello ni cabeza con las manos', 'Expulsa el aire al contraer y subir', 'No necesitas subir demasiado, solo lo suficiente para contraer el abdomen'],
+    suggestedWeight: 'Peso corporal',
+    suggestedReps: '3 series de 15-20 repeticiones'
   }
 ];
 
@@ -294,6 +333,29 @@ export default function EjerciciosScreen() {
                   <Text style={styles.sectionTitle}>Beneficios</Text>
                   <Text style={styles.sectionText}>{selectedExercise.benefits}</Text>
                 </View>
+
+                {selectedExercise.tips && selectedExercise.tips.length > 0 && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Consejos de Ejecución</Text>
+                    {selectedExercise.tips.map((tip, index) => (
+                      <Text key={index} style={styles.sectionText}>• {tip}</Text>
+                    ))}
+                  </View>
+                )}
+
+                {selectedExercise.suggestedWeight && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Peso Sugerido</Text>
+                    <Text style={styles.sectionText}>{selectedExercise.suggestedWeight}</Text>
+                  </View>
+                )}
+
+                {selectedExercise.suggestedReps && (
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Repeticiones Sugeridas</Text>
+                    <Text style={styles.sectionText}>{selectedExercise.suggestedReps}</Text>
+                  </View>
+                )}
 
               </ScrollView>
             )}
