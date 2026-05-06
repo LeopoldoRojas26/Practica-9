@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, ScrollView, View, Text, Pressable, TextInput, Modal, FlatList } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeContext } from '@/context/ThemeContext';
 
 const mockExercisesCatalog = [
   { id: 1, name: 'Press de Banca' },
@@ -14,6 +15,7 @@ const mockExercisesCatalog = [
 ];
 
 export default function EntrenarScreen() {
+  const { isDark } = useThemeContext();
   const [exercises, setExercises] = useState([
     {
       id: 'e1',
@@ -107,60 +109,60 @@ export default function EntrenarScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Día de Pierna</Text>
+    <View style={[styles.container, isDark && styles.containerDark]}>
+      <View style={[styles.header, isDark && styles.headerDark]}>
+        <Text style={[styles.title, isDark && styles.textDark]}>Día de Pierna</Text>
         <Text style={styles.subtitle}>En progreso • 15:42</Text>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {exercises.map((exercise) => (
-          <View key={exercise.id} style={styles.exerciseCard}>
+          <View key={exercise.id} style={[styles.exerciseCard, isDark && styles.cardDark]}>
             <View style={styles.exerciseHeader}>
-              <Text style={styles.exerciseName}>{exercise.name}</Text>
+              <Text style={[styles.exerciseName, isDark && styles.textDark]}>{exercise.name}</Text>
               <Pressable onPress={() => removeExercise(exercise.id)} style={styles.removeExBtn}>
                 <IconSymbol name="xmark.circle.fill" size={20} color="#FF3B30" />
               </Pressable>
             </View>
 
-            <View style={styles.tableHeader}>
-              <Text style={styles.colSet}>Serie</Text>
-              <Text style={styles.colWeight}>kg</Text>
-              <Text style={styles.colReps}>Reps</Text>
-              <Text style={styles.colCheck}>✓</Text>
+            <View style={[styles.tableHeader, isDark && styles.borderDark]}>
+              <Text style={[styles.colSet, isDark && styles.colDark]}>Serie</Text>
+              <Text style={[styles.colWeight, isDark && styles.colDark]}>kg</Text>
+              <Text style={[styles.colReps, isDark && styles.colDark]}>Reps</Text>
+              <Text style={[styles.colCheck, isDark && styles.colDark]}>✓</Text>
             </View>
 
             {exercise.sets.map((set) => (
-              <View key={set.id} style={set.completed ? styles.rowCompleted : styles.rowPending}>
+              <View key={set.id} style={set.completed ? [styles.rowCompleted, isDark && styles.rowCompletedDark] : [styles.rowPending, isDark && styles.rowPendingDark]}>
                 <Pressable onPress={() => removeSet(exercise.id, set.id)} style={{ flex: 1, alignItems: 'center' }}>
-                  <Text style={styles.cellSet}>{set.setNumber}</Text>
+                  <Text style={[styles.cellSet, isDark && styles.colDark]}>{set.setNumber}</Text>
                 </Pressable>
 
                 <TextInput
-                  style={[styles.inputCell, styles.cellWeight, set.completed && styles.inputCompleted]}
+                  style={[styles.inputCell, isDark && styles.inputCellDark, styles.cellWeight, set.completed && styles.inputCompleted, set.completed && isDark && styles.inputCompletedDark]}
                   value={set.weight}
                   onChangeText={(val) => updateSet(exercise.id, set.id, 'weight', val)}
                   keyboardType="numeric"
                   placeholder="-"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={isDark ? "#666" : "#999"}
                   editable={!set.completed}
                 />
 
                 <TextInput
-                  style={[styles.inputCell, styles.cellReps, set.completed && styles.inputCompleted]}
+                  style={[styles.inputCell, isDark && styles.inputCellDark, styles.cellReps, set.completed && styles.inputCompleted, set.completed && isDark && styles.inputCompletedDark]}
                   value={set.reps}
                   onChangeText={(val) => updateSet(exercise.id, set.id, 'reps', val)}
                   keyboardType="numeric"
                   placeholder="-"
-                  placeholderTextColor="#999"
+                  placeholderTextColor={isDark ? "#666" : "#999"}
                   editable={!set.completed}
                 />
 
                 <Pressable
-                  style={set.completed ? styles.checkDone : styles.checkPending}
+                  style={set.completed ? styles.checkDone : [styles.checkPending, isDark && styles.checkPendingDark]}
                   onPress={() => toggleSetComplete(exercise.id, set.id)}
                 >
-                  <IconSymbol name={set.completed ? "checkmark" : "timer"} size={14} color={set.completed ? "#fff" : "#666"} />
+                  <IconSymbol name={set.completed ? "checkmark" : "timer"} size={14} color={set.completed ? "#fff" : (isDark ? "#999" : "#666")} />
                 </Pressable>
               </View>
             ))}
@@ -176,7 +178,7 @@ export default function EntrenarScreen() {
         </Pressable>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, isDark && styles.footerDark]}>
         <Pressable style={styles.finishButton}>
           <Text style={styles.finishButtonText}>Finalizar Entrenamiento</Text>
         </Pressable>
@@ -189,19 +191,19 @@ export default function EntrenarScreen() {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, isDark && styles.modalContentDark]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Seleccionar Ejercicio</Text>
+              <Text style={[styles.modalTitle, isDark && styles.textDark]}>Seleccionar Ejercicio</Text>
               <Pressable onPress={() => setModalVisible(false)}>
-                <IconSymbol name="xmark" size={24} color="#333" />
+                <IconSymbol name="xmark" size={24} color={isDark ? "#FFF" : "#333"} />
               </Pressable>
             </View>
             <FlatList
               data={mockExercisesCatalog}
               keyExtractor={item => item.id.toString()}
               renderItem={({ item }) => (
-                <Pressable style={styles.modalItem} onPress={() => addExercise(item.name)}>
-                  <Text style={styles.modalItemText}>{item.name}</Text>
+                <Pressable style={[styles.modalItem, isDark && styles.borderDark]} onPress={() => addExercise(item.name)}>
+                  <Text style={[styles.modalItemText, isDark && styles.textDark]}>{item.name}</Text>
                   <IconSymbol name="plus.circle" size={20} color="#4A90E2" />
                 </Pressable>
               )}
@@ -218,6 +220,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7F9FC',
   },
+  containerDark: {
+    backgroundColor: '#121212',
+  },
   header: {
     padding: 20,
     paddingTop: 60,
@@ -225,10 +230,17 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EAEAEA',
   },
+  headerDark: {
+    backgroundColor: '#1E1E1E',
+    borderBottomColor: '#333333',
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#1A1A1A',
+  },
+  textDark: {
+    color: '#FFFFFF',
   },
   subtitle: {
     fontSize: 14,
@@ -254,6 +266,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  cardDark: {
+    backgroundColor: '#1E1E1E',
+  },
   exerciseHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -276,10 +291,14 @@ const styles = StyleSheet.create({
     borderBottomColor: '#EAEAEA',
     marginBottom: 8,
   },
+  borderDark: {
+    borderBottomColor: '#333333',
+  },
   colSet: { flex: 1, color: '#666', fontSize: 12, fontWeight: '600', textAlign: 'center' },
   colWeight: { flex: 2, color: '#666', fontSize: 12, fontWeight: '600', textAlign: 'center' },
   colReps: { flex: 2, color: '#666', fontSize: 12, fontWeight: '600', textAlign: 'center' },
   colCheck: { flex: 1, color: '#666', fontSize: 12, fontWeight: '600', textAlign: 'center' },
+  colDark: { color: '#AAA' },
 
   rowCompleted: {
     flexDirection: 'row',
@@ -289,6 +308,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 4,
   },
+  rowCompletedDark: {
+    backgroundColor: 'rgba(52, 199, 89, 0.1)',
+  },
   rowPending: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -296,6 +318,9 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     backgroundColor: '#fff',
     borderRadius: 8,
+  },
+  rowPendingDark: {
+    backgroundColor: '#2A2A2A',
   },
 
   cellSet: { color: '#666', fontWeight: '500', fontSize: 16 },
@@ -309,9 +334,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#333',
   },
+  inputCellDark: {
+    backgroundColor: '#333',
+    color: '#FFF',
+  },
   inputCompleted: {
     backgroundColor: 'transparent',
     color: '#666',
+  },
+  inputCompletedDark: {
+    backgroundColor: 'transparent',
+    color: '#888',
   },
   cellWeight: { flex: 2 },
   cellReps: { flex: 2 },
@@ -335,6 +368,9 @@ const styles = StyleSheet.create({
     maxWidth: 28,
     borderRadius: 14,
     marginHorizontal: 'auto',
+  },
+  checkPendingDark: {
+    backgroundColor: '#444',
   },
 
   addSetButton: {
@@ -371,6 +407,10 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#EAEAEA',
   },
+  footerDark: {
+    backgroundColor: '#1E1E1E',
+    borderTopColor: '#333',
+  },
   finishButton: {
     backgroundColor: '#34C759',
     padding: 16,
@@ -394,6 +434,9 @@ const styles = StyleSheet.create({
     minHeight: '50%',
     maxHeight: '80%',
     padding: 20,
+  },
+  modalContentDark: {
+    backgroundColor: '#1E1E1E',
   },
   modalHeader: {
     flexDirection: 'row',

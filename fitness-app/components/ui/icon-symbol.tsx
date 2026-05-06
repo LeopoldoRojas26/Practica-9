@@ -22,6 +22,9 @@ const MAPPING = {
   'clock.fill': 'history',
   'timer': 'timer',
   'list.bullet': 'fitness-center',
+  'sun.max.fill': 'wb-sunny',
+  'moon.fill': 'dark-mode',
+  'drop.fill': 'water-drop',
 } as IconMapping;
 
 /**

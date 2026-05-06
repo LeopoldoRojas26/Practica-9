@@ -1,7 +1,9 @@
 import { StyleSheet, ScrollView, View, Text, Pressable, TextInput } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeContext } from '@/context/ThemeContext';
 
 export default function EjerciciosScreen() {
+  const { isDark } = useThemeContext();
   const categories = ['Todos', 'Pecho', 'Espalda', 'Pierna', 'Hombro', 'Bíceps', 'Tríceps', 'Core'];
   
   const mockExercises = [
@@ -16,16 +18,16 @@ export default function EjerciciosScreen() {
   ];
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Ejercicios</Text>
+    <View style={[styles.container, isDark && styles.containerDark]}>
+      <View style={[styles.header, isDark && styles.headerDark]}>
+        <Text style={[styles.title, isDark && styles.textDark]}>Ejercicios</Text>
         
-        <View style={styles.searchContainer}>
+        <View style={[styles.searchContainer, isDark && styles.searchContainerDark]}>
           <IconSymbol name="list.bullet" size={20} color="#999" />
           <TextInput 
-            style={styles.searchInput}
+            style={[styles.searchInput, isDark && styles.searchInputDark]}
             placeholder="Buscar ejercicio..."
-            placeholderTextColor="#999"
+            placeholderTextColor={isDark ? "#888" : "#999"}
           />
         </View>
 
@@ -35,11 +37,13 @@ export default function EjerciciosScreen() {
               key={index} 
               style={[
                 styles.filterChip, 
+                isDark && styles.filterChipDark,
                 index === 0 ? styles.filterChipActive : null
               ]}
             >
               <Text style={[
                 styles.filterText,
+                isDark && styles.filterTextDark,
                 index === 0 ? styles.filterTextActive : null
               ]}>{cat}</Text>
             </Pressable>
@@ -49,17 +53,17 @@ export default function EjerciciosScreen() {
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {mockExercises.map((exercise) => (
-          <Pressable key={exercise.id} style={styles.exerciseCard}>
-            <View style={styles.exerciseImagePlaceholder}>
-              <IconSymbol name="figure.run" size={24} color="#A0A0A0" />
+          <Pressable key={exercise.id} style={[styles.exerciseCard, isDark && styles.cardDark]}>
+            <View style={[styles.exerciseImagePlaceholder, isDark && styles.exerciseImagePlaceholderDark]}>
+              <IconSymbol name="figure.run" size={24} color={isDark ? "#888" : "#A0A0A0"} />
             </View>
             <View style={styles.exerciseInfo}>
-              <Text style={styles.exerciseName}>{exercise.name}</Text>
+              <Text style={[styles.exerciseName, isDark && styles.textDark]}>{exercise.name}</Text>
               <View style={styles.exerciseTags}>
-                <View style={styles.tag}>
+                <View style={[styles.tag, isDark && styles.tagDark]}>
                   <Text style={styles.tagText}>{exercise.muscle}</Text>
                 </View>
-                <View style={styles.tag}>
+                <View style={[styles.tag, isDark && styles.tagDark]}>
                   <Text style={styles.tagText}>{exercise.equipment}</Text>
                 </View>
               </View>
@@ -77,6 +81,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7F9FC',
   },
+  containerDark: {
+    backgroundColor: '#121212',
+  },
   header: {
     padding: 20,
     paddingTop: 60,
@@ -84,11 +91,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EAEAEA',
   },
+  headerDark: {
+    backgroundColor: '#1E1E1E',
+    borderBottomColor: '#333333',
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#1A1A1A',
     marginBottom: 16,
+  },
+  textDark: {
+    color: '#FFFFFF',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -99,11 +113,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     marginBottom: 16,
   },
+  searchContainerDark: {
+    backgroundColor: '#333',
+  },
   searchInput: {
     flex: 1,
     marginLeft: 8,
     fontSize: 16,
     color: '#333',
+  },
+  searchInputDark: {
+    color: '#FFF',
   },
   filterScroll: {
     flexDirection: 'row',
@@ -115,6 +135,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F0F0F0',
     marginRight: 8,
   },
+  filterChipDark: {
+    backgroundColor: '#333',
+  },
   filterChipActive: {
     backgroundColor: '#4A90E2',
   },
@@ -122,6 +145,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     fontWeight: '600',
+  },
+  filterTextDark: {
+    color: '#AAA',
   },
   filterTextActive: {
     color: '#fff',
@@ -145,6 +171,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  cardDark: {
+    backgroundColor: '#1E1E1E',
+  },
   exerciseImagePlaceholder: {
     width: 60,
     height: 60,
@@ -153,6 +182,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 16,
+  },
+  exerciseImagePlaceholderDark: {
+    backgroundColor: '#333',
   },
   exerciseInfo: {
     flex: 1,
@@ -172,6 +204,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+  },
+  tagDark: {
+    backgroundColor: '#2A3A4A',
   },
   tagText: {
     fontSize: 12,

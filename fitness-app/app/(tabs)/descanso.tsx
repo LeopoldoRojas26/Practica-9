@@ -1,31 +1,34 @@
 import { StyleSheet, View, Text, Pressable, Dimensions } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeContext } from '@/context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
 export default function DescansoScreen() {
+  const { isDark } = useThemeContext();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, isDark && styles.containerDark]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Descanso</Text>
-        <Text style={styles.subtitle}>Recuperación entre series</Text>
+        <Text style={[styles.title, isDark && styles.textDark]}>Descanso</Text>
+        <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>Recuperación entre series</Text>
       </View>
 
       <View style={styles.content}>
         
         {/* Timer Circle */}
-        <View style={styles.timerCircle}>
-          <Text style={styles.timerText}>01:30</Text>
-          <Text style={styles.timerLabel}>Restante</Text>
+        <View style={[styles.timerCircle, isDark && styles.timerCircleDark]}>
+          <Text style={[styles.timerText, isDark && styles.textDark]}>01:30</Text>
+          <Text style={[styles.timerLabel, isDark && styles.subtitleDark]}>Restante</Text>
         </View>
 
         {/* Adjust Time Controls */}
         <View style={styles.controlsContainer}>
-          <Pressable style={styles.adjustButton}>
-            <Text style={styles.adjustText}>-30s</Text>
+          <Pressable style={[styles.adjustButton, isDark && styles.adjustButtonDark]}>
+            <Text style={[styles.adjustText, isDark && styles.textDark]}>-30s</Text>
           </Pressable>
-          <Pressable style={styles.adjustButton}>
-            <Text style={styles.adjustText}>+30s</Text>
+          <Pressable style={[styles.adjustButton, isDark && styles.adjustButtonDark]}>
+            <Text style={[styles.adjustText, isDark && styles.textDark]}>+30s</Text>
           </Pressable>
         </View>
 
@@ -35,16 +38,16 @@ export default function DescansoScreen() {
             <IconSymbol name="timer" size={24} color="#fff" />
             <Text style={styles.mainButtonText}>Pausar</Text>
           </Pressable>
-          <Pressable style={[styles.mainButton, styles.skipButton]}>
-            <Text style={styles.skipButtonText}>Omitir</Text>
+          <Pressable style={[styles.mainButton, styles.skipButton, isDark && styles.skipButtonDark]}>
+            <Text style={[styles.skipButtonText, isDark && styles.textDark]}>Omitir</Text>
           </Pressable>
         </View>
 
         {/* Upcoming */}
-        <View style={styles.upcomingBox}>
-          <Text style={styles.upcomingTitle}>Siguiente Serie</Text>
+        <View style={[styles.upcomingBox, isDark && styles.upcomingBoxDark]}>
+          <Text style={[styles.upcomingTitle, isDark && styles.subtitleDark]}>Siguiente Serie</Text>
           <View style={styles.upcomingDetails}>
-            <Text style={styles.upcomingExercise}>Sentadilla Libre</Text>
+            <Text style={[styles.upcomingExercise, isDark && styles.textDark]}>Sentadilla Libre</Text>
             <Text style={styles.upcomingReps}>100kg x 8 reps</Text>
           </View>
         </View>
@@ -59,6 +62,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7F9FC',
   },
+  containerDark: {
+    backgroundColor: '#121212',
+  },
   header: {
     padding: 20,
     paddingTop: 60,
@@ -69,10 +75,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1A1A1A',
   },
+  textDark: {
+    color: '#FFFFFF',
+  },
   subtitle: {
     fontSize: 14,
     color: '#666',
     marginTop: 4,
+  },
+  subtitleDark: {
+    color: '#AAA',
   },
   content: {
     flex: 1,
@@ -97,6 +109,11 @@ const styles = StyleSheet.create({
     elevation: 10,
     marginBottom: 40,
   },
+  timerCircleDark: {
+    backgroundColor: '#1E1E1E',
+    shadowColor: '#4A90E2',
+    shadowOpacity: 0.1,
+  },
   timerText: {
     fontSize: 64,
     fontWeight: 'bold',
@@ -118,6 +135,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 24,
+  },
+  adjustButtonDark: {
+    backgroundColor: '#333',
   },
   adjustText: {
     fontSize: 16,
@@ -148,6 +168,9 @@ const styles = StyleSheet.create({
   skipButton: {
     backgroundColor: '#EAEAEA',
   },
+  skipButtonDark: {
+    backgroundColor: '#333',
+  },
   skipButtonText: {
     color: '#333',
     fontSize: 18,
@@ -163,6 +186,9 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
+  },
+  upcomingBoxDark: {
+    backgroundColor: '#1E1E1E',
   },
   upcomingTitle: {
     fontSize: 12,

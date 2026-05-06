@@ -1,7 +1,9 @@
 import { StyleSheet, ScrollView, View, Text, Pressable } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeContext } from '@/context/ThemeContext';
 
 export default function HistorialScreen() {
+  const { isDark } = useThemeContext();
   const mockHistory = [
     { id: 1, name: 'Día de Pecho y Tríceps', date: 'Ayer, 18:30', duration: '1h 15m', volume: '4,520 kg', prs: 2 },
     { id: 2, name: 'Espalda y Bíceps', date: '2 Mayo, 19:00', duration: '1h 5m', volume: '3,800 kg', prs: 0 },
@@ -10,34 +12,34 @@ export default function HistorialScreen() {
   ];
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Tu Historial</Text>
-        <Text style={styles.subtitle}>Mayo 2026</Text>
+    <View style={[styles.container, isDark && styles.containerDark]}>
+      <View style={[styles.header, isDark && styles.headerDark]}>
+        <Text style={[styles.title, isDark && styles.textDark]}>Tu Historial</Text>
+        <Text style={[styles.subtitle, isDark && styles.subtitleDark]}>Mayo 2026</Text>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         {mockHistory.map((workout) => (
-          <Pressable key={workout.id} style={styles.card}>
+          <Pressable key={workout.id} style={[styles.card, isDark && styles.cardDark]}>
             <View style={styles.cardHeader}>
-              <View style={styles.cardIcon}>
+              <View style={[styles.cardIcon, isDark && styles.cardIconDark]}>
                 <IconSymbol name="figure.run" size={24} color="#4A90E2" />
               </View>
               <View style={styles.cardTitleContainer}>
-                <Text style={styles.cardTitle}>{workout.name}</Text>
-                <Text style={styles.cardDate}>{workout.date}</Text>
+                <Text style={[styles.cardTitle, isDark && styles.textDark]}>{workout.name}</Text>
+                <Text style={[styles.cardDate, isDark && styles.subtitleDark]}>{workout.date}</Text>
               </View>
               <IconSymbol name="chevron.right" size={20} color="#C7C7CC" />
             </View>
             
-            <View style={styles.cardStats}>
+            <View style={[styles.cardStats, isDark && styles.borderDark]}>
               <View style={styles.statItem}>
-                <IconSymbol name="timer" size={16} color="#666" />
-                <Text style={styles.statText}>{workout.duration}</Text>
+                <IconSymbol name="timer" size={16} color={isDark ? "#AAA" : "#666"} />
+                <Text style={[styles.statText, isDark && styles.statTextDark]}>{workout.duration}</Text>
               </View>
               <View style={styles.statItem}>
-                <IconSymbol name="list.bullet" size={16} color="#666" />
-                <Text style={styles.statText}>{workout.volume}</Text>
+                <IconSymbol name="list.bullet" size={16} color={isDark ? "#AAA" : "#666"} />
+                <Text style={[styles.statText, isDark && styles.statTextDark]}>{workout.volume}</Text>
               </View>
               {workout.prs > 0 && (
                 <View style={styles.prBadge}>
@@ -57,6 +59,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7F9FC',
   },
+  containerDark: {
+    backgroundColor: '#121212',
+  },
   header: {
     padding: 20,
     paddingTop: 60,
@@ -64,15 +69,25 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EAEAEA',
   },
+  headerDark: {
+    backgroundColor: '#1E1E1E',
+    borderBottomColor: '#333333',
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#1A1A1A',
   },
+  textDark: {
+    color: '#FFFFFF',
+  },
   subtitle: {
     fontSize: 16,
     color: '#666',
     marginTop: 4,
+  },
+  subtitleDark: {
+    color: '#AAA',
   },
   scrollView: {
     flex: 1,
@@ -91,6 +106,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  cardDark: {
+    backgroundColor: '#1E1E1E',
+  },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -104,6 +122,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+  },
+  cardIconDark: {
+    backgroundColor: '#2A3A4A',
   },
   cardTitleContainer: {
     flex: 1,
@@ -126,6 +147,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
   },
+  borderDark: {
+    borderTopColor: '#333',
+  },
   statItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -135,6 +159,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#444',
     fontWeight: '500',
+  },
+  statTextDark: {
+    color: '#CCC',
   },
   prBadge: {
     marginLeft: 'auto',
