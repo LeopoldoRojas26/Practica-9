@@ -22,9 +22,16 @@ const MAPPING = {
   'clock.fill': 'history',
   'timer': 'timer',
   'list.bullet': 'fitness-center',
-  'sun.max.fill': 'wb-sunny',
-  'moon.fill': 'dark-mode',
-  'drop.fill': 'water-drop',
+  'play.fill': 'play-arrow',
+  'pause.fill': 'pause',
+  'arrow.counterclockwise': 'refresh',
+  'magnifyingglass': 'search',
+  'xmark': 'close',
+  'camera.fill': 'photo-camera',
+  'chart.xyaxis.line': 'show-chart',
+  'plus': 'add',
+  'checkmark': 'check',
+  'trash': 'delete',
 } as IconMapping;
 
 /**

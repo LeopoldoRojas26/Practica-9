@@ -1,53 +1,65 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, View, Text, Pressable, Modal, TextInput } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState, useCallback } from 'react';
+import { StyleSheet, ScrollView, View, Text, Pressable } from 'react-native';
+import { useRouter, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import WaterTracker from '@/components/WaterTracker';
-import { useThemeContext } from '@/context/ThemeContext';
+import { useAppContext } from '@/app/context/AppContext';
+import { EXERCISES } from '@/app/(tabs)/ejercicios';
+import { ProgresoModal } from '@/components/ProgresoModal';
 
 export default function InicioScreen() {
   const router = useRouter();
-  const { isDark, toggleTheme } = useThemeContext();
-  
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [name, setName] = useState('');
-  const [weight, setWeight] = useState('');
-  const [age, setAge] = useState('');
-  const [userName, setUserName] = useState('Usuario');
+  const { timerTimeLeft, isTimerActive, isWorkoutActive, workoutName, workoutStartTime } = useAppContext();
 
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const profile = await AsyncStorage.getItem('userProfile');
-        if (profile) {
-          const parsed = JSON.parse(profile);
-          setUserName(parsed.name || 'Usuario');
-        } else {
-          setShowOnboarding(true);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    loadProfile();
-  }, []);
+  const [workoutsCount, setWorkoutsCount] = useState(0);
+  const [activeMinutes, setActiveMinutes] = useState(0);
+  const [lastWorkoutDate, setLastWorkoutDate] = useState('Ninguno');
+  const [progresoVisible, setProgresoVisible] = useState(false);
 
-  const saveProfile = async () => {
-    if (!name.trim()) return;
+  const loadStats = async () => {
     try {
-      const profile = { name, weight, age };
-      await AsyncStorage.setItem('userProfile', JSON.stringify(profile));
-      setUserName(name);
-      setShowOnboarding(false);
+      const storedWorkouts = await AsyncStorage.getItem('workouts');
+      if (storedWorkouts) {
+        const parsedWorkouts = JSON.parse(storedWorkouts);
+
+        const totalSeconds = parsedWorkouts.reduce((acc: number, w: any) => acc + (w.duration || 0), 0);
+        setActiveMinutes(Math.floor(totalSeconds / 60));
+
+        setWorkoutsCount(parsedWorkouts.length);
+
+        if (parsedWorkouts.length > 0) {
+          setLastWorkoutDate(parsedWorkouts[0].date);
+        } else {
+          setLastWorkoutDate('Ninguno');
+        }
+      }
     } catch (e) {
       console.error(e);
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      loadStats();
+    }, [])
+  );
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const getWorkoutTimeStr = () => {
+    if (!workoutStartTime) return '';
+    const now = new Date();
+    const diffMins = Math.floor((now.getTime() - workoutStartTime.getTime()) / 60000);
+    return `${diffMins} min`;
+  };
+
   return (
-    <ScrollView 
-      style={[styles.container, isDark ? styles.containerDark : styles.containerLight]} 
+    <ScrollView
+      style={[styles.container, isDark ? styles.containerDark : styles.containerLight]}
       contentContainerStyle={styles.content}
     >
       <View style={styles.header}>
@@ -60,10 +72,10 @@ export default function InicioScreen() {
           </Text>
         </View>
         <Pressable onPress={toggleTheme} style={[styles.settingsButton, isDark ? styles.settingsButtonDark : styles.settingsButtonLight]}>
-          <IconSymbol 
-            name={isDark ? "moon.fill" : "sun.max.fill"} 
-            size={24} 
-            color={isDark ? "#F1F1F1" : "#F39C12"} 
+          <IconSymbol
+            name={isDark ? "moon.fill" : "sun.max.fill"}
+            size={24}
+            color={isDark ? "#F1F1F1" : "#F39C12"}
           />
         </Pressable>
       </View>
@@ -71,13 +83,13 @@ export default function InicioScreen() {
       <WaterTracker />
 
       <View style={styles.statsContainer}>
-        <View style={[styles.statBox, isDark ? styles.cardDark : styles.cardLight]}>
-          <Text style={styles.statNumber}>4</Text>
-          <Text style={[styles.statLabel, isDark ? styles.subtitleDark : styles.subtitleLight]}>Entrenos esta sem.</Text>
+        <View style={styles.statBox}>
+          <Text style={styles.statNumber}>{workoutsCount}</Text>
+          <Text style={styles.statLabel}>Entrenos totales</Text>
         </View>
-        <View style={[styles.statBox, isDark ? styles.cardDark : styles.cardLight]}>
-          <Text style={styles.statNumber}>320</Text>
-          <Text style={[styles.statLabel, isDark ? styles.subtitleDark : styles.subtitleLight]}>Minutos activos</Text>
+        <View style={styles.statBox}>
+          <Text style={styles.statNumber}>{activeMinutes}</Text>
+          <Text style={styles.statLabel}>Minutos activos</Text>
         </View>
       </View>
 
@@ -86,21 +98,23 @@ export default function InicioScreen() {
       <View style={styles.cardsContainer}>
         <Pressable style={[styles.card, styles.cardPrimary]} onPress={() => router.push('/entrenar')}>
           <IconSymbol name="figure.run" size={32} color="#fff" />
-          <Text style={styles.cardTitleLight}>Empezar a Entrenar</Text>
-          <Text style={styles.cardSubLight}>Día de Pierna - 45 min</Text>
+          <Text style={styles.cardTitleLight}>{isWorkoutActive ? 'Entrenamiento Activo' : 'Empezar a Entrenar'}</Text>
+          <Text style={styles.cardSubLight}>
+            {isWorkoutActive ? `${workoutName} - ${getWorkoutTimeStr()}` : 'Explorar Rutinas'}
+          </Text>
         </Pressable>
 
         <View style={styles.rowCards}>
           <Pressable style={[styles.cardSmall, isDark ? styles.cardDark : styles.cardLight]} onPress={() => router.push('/historial')}>
             <IconSymbol name="clock.fill" size={28} color="#4A90E2" />
-            <Text style={[styles.cardTitle, isDark ? styles.textDark : styles.textLight]}>Historial</Text>
-            <Text style={[styles.cardSub, isDark ? styles.subtitleDark : styles.subtitleLight]}>Último: Ayer</Text>
+            <Text style={styles.cardTitle}>Historial</Text>
+            <Text style={styles.cardSub} numberOfLines={1}>Último: {lastWorkoutDate}</Text>
           </Pressable>
 
           <Pressable style={[styles.cardSmall, isDark ? styles.cardDark : styles.cardLight]} onPress={() => router.push('/ejercicios')}>
             <IconSymbol name="list.bullet" size={28} color="#E24A75" />
-            <Text style={[styles.cardTitle, isDark ? styles.textDark : styles.textLight]}>Ejercicios</Text>
-            <Text style={[styles.cardSub, isDark ? styles.subtitleDark : styles.subtitleLight]}>Explorar</Text>
+            <Text style={styles.cardTitle}>Ejercicios</Text>
+            <Text style={styles.cardSub}>{EXERCISES.length} disponibles</Text>
           </Pressable>
         </View>
 
@@ -108,71 +122,30 @@ export default function InicioScreen() {
           <View style={styles.descansoLeft}>
             <IconSymbol name="timer" size={28} color="#F39C12" />
             <View style={styles.descansoText}>
-              <Text style={[styles.cardTitle, isDark ? styles.textDark : styles.textLight]}>Descanso Actual</Text>
-              <Text style={[styles.cardSub, isDark ? styles.subtitleDark : styles.subtitleLight]}>Recuperación óptima</Text>
+              <Text style={styles.cardTitle}>Descanso {isTimerActive ? 'Activo' : 'Actual'}</Text>
+              <Text style={styles.cardSub}>{isTimerActive ? 'Cuenta regresiva...' : 'Recuperación óptima'}</Text>
             </View>
           </View>
-          <Text style={styles.descansoTime}>00:00</Text>
+          <Text style={[styles.descansoTime, isTimerActive && { color: '#E74C3C' }]}>{formatTime(timerTimeLeft)}</Text>
         </Pressable>
+
+        <Pressable style={styles.cardProgreso} onPress={() => setProgresoVisible(true)}>
+          <View style={styles.progresoLeft}>
+            <IconSymbol name="chart.xyaxis.line" size={28} color="#9B59B6" />
+            <View style={styles.progresoText}>
+              <Text style={styles.cardTitle}>Tu Progreso</Text>
+              <Text style={styles.cardSub}>Peso, medidas y fotos</Text>
+            </View>
+          </View>
+          <IconSymbol name="chevron.right" size={24} color="#ccc" />
+        </Pressable>
+
       </View>
 
-      {/* Onboarding Modal */}
-      <Modal
-        visible={showOnboarding}
-        animationType="slide"
-        transparent={true}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, isDark ? styles.modalContentDark : styles.modalContentLight]}>
-            <Text style={[styles.modalTitle, isDark ? styles.textDark : styles.textLight]}>¡Bienvenido!</Text>
-            <Text style={[styles.modalSubtitle, isDark ? styles.subtitleDark : styles.subtitleLight]}>Cuéntanos un poco sobre ti</Text>
-
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, isDark ? styles.textDark : styles.textLight]}>Nombre</Text>
-              <TextInput
-                style={[styles.input, isDark ? styles.inputDark : styles.inputLight]}
-                placeholder="Ej. Martha"
-                placeholderTextColor={isDark ? "#888" : "#999"}
-                value={name}
-                onChangeText={setName}
-              />
-            </View>
-
-            <View style={styles.rowInputs}>
-              <View style={[styles.inputGroup, { flex: 1 }]}>
-                <Text style={[styles.inputLabel, isDark ? styles.textDark : styles.textLight]}>Peso (kg)</Text>
-                <TextInput
-                  style={[styles.input, isDark ? styles.inputDark : styles.inputLight]}
-                  placeholder="Ej. 65"
-                  placeholderTextColor={isDark ? "#888" : "#999"}
-                  value={weight}
-                  onChangeText={setWeight}
-                  keyboardType="numeric"
-                />
-              </View>
-              <View style={[styles.inputGroup, { flex: 1, marginLeft: 16 }]}>
-                <Text style={[styles.inputLabel, isDark ? styles.textDark : styles.textLight]}>Edad</Text>
-                <TextInput
-                  style={[styles.input, isDark ? styles.inputDark : styles.inputLight]}
-                  placeholder="Ej. 28"
-                  placeholderTextColor={isDark ? "#888" : "#999"}
-                  value={age}
-                  onChangeText={setAge}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            <Pressable 
-              style={[styles.saveButton, !name.trim() && styles.saveButtonDisabled]} 
-              onPress={saveProfile}
-              disabled={!name.trim()}
-            >
-              <Text style={styles.saveButtonText}>Guardar Perfil</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+      <ProgresoModal
+        visible={progresoVisible}
+        onClose={() => setProgresoVisible(false)}
+      />
 
     </ScrollView>
   );
@@ -348,78 +321,25 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#F39C12',
   },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '85%',
-    padding: 24,
-    borderRadius: 20,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-  },
-  modalContentLight: {
-    backgroundColor: '#fff',
-  },
-  modalContentDark: {
-    backgroundColor: '#1E1E1E',
-  },
-  modalTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  rowInputs: {
+  cardProgreso: {
     flexDirection: 'row',
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  input: {
-    height: 48,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-  },
-  inputLight: {
-    backgroundColor: '#F0F0F0',
-    color: '#333',
-  },
-  inputDark: {
-    backgroundColor: '#2A2A2A',
-    color: '#FFF',
-  },
-  saveButton: {
-    backgroundColor: '#4A90E2',
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 20,
     alignItems: 'center',
-    marginTop: 20,
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  saveButtonDisabled: {
-    backgroundColor: '#A0C4E8',
+  progresoLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
   },
-  saveButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  progresoText: {
+    justifyContent: 'center',
   },
 });

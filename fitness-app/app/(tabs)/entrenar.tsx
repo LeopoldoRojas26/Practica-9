@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
-import { StyleSheet, ScrollView, View, Text, Pressable, TextInput, Modal, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, ScrollView, View, Text, Pressable, TextInput, Modal, FlatList, Alert, Animated } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { useThemeContext } from '@/context/ThemeContext';
+import { Swipeable } from 'react-native-gesture-handler';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useRouter } from 'expo-router';
+import { useAppContext } from '@/app/context/AppContext';
 
 const mockExercisesCatalog = [
   { id: 1, name: 'Press de Banca' },
@@ -14,29 +17,96 @@ const mockExercisesCatalog = [
   { id: 8, name: 'Remo con Barra' },
 ];
 
-export default function EntrenarScreen() {
-  const { isDark } = useThemeContext();
-  const [exercises, setExercises] = useState([
-    {
-      id: 'e1',
-      name: 'Sentadilla Libre',
-      sets: [
-        { id: 's1', setNumber: 1, weight: '80', reps: '12', completed: true },
-        { id: 's2', setNumber: 2, weight: '90', reps: '10', completed: true },
-        { id: 's3', setNumber: 3, weight: '100', reps: '8', completed: false },
-      ]
-    },
-    {
-      id: 'e2',
-      name: 'Prensa en Máquina',
-      sets: [
-        { id: 's4', setNumber: 1, weight: '120', reps: '12', completed: false },
-        { id: 's5', setNumber: 2, weight: '140', reps: '10', completed: false },
-      ]
-    }
-  ]);
+const WORKOUT_TEMPLATES = [
+  {
+    id: 't1',
+    name: 'Rutina Torso',
+    icon: 'figure.run',
+    color: '#4A90E2',
+    exercises: [
+      { name: 'Press de Banca', setsCount: 4 },
+      { name: 'Dominadas', setsCount: 4 },
+      { name: 'Press Militar', setsCount: 3 },
+      { name: 'Remo con Barra', setsCount: 3 },
+    ]
+  },
+  {
+    id: 't2',
+    name: 'Rutina Pierna',
+    icon: 'figure.run',
+    color: '#F39C12',
+    exercises: [
+      { name: 'Sentadilla Libre', setsCount: 4 },
+      { name: 'Prensa en Máquina', setsCount: 3 },
+      { name: 'Curl Femoral', setsCount: 3 },
+      { name: 'Elevación de Talones', setsCount: 4 },
+    ]
+  },
+  {
+    id: 't3',
+    name: 'Rutina Push',
+    icon: 'figure.run',
+    color: '#E24A75',
+    exercises: [
+      { name: 'Press Inclinado', setsCount: 4 },
+      { name: 'Aperturas', setsCount: 3 },
+      { name: 'Elevaciones Laterales', setsCount: 4 },
+      { name: 'Extensión de Tríceps', setsCount: 3 },
+    ]
+  },
+  {
+    id: 't4',
+    name: 'Rutina Pull',
+    icon: 'figure.run',
+    color: '#9B59B6',
+    exercises: [
+      { name: 'Peso Muerto', setsCount: 4 },
+      { name: 'Jalón al Pecho', setsCount: 3 },
+      { name: 'Remo Gironda', setsCount: 3 },
+      { name: 'Curl de Bíceps', setsCount: 4 },
+    ]
+  },
+  {
+    id: 't5',
+    name: 'Full Body',
+    icon: 'figure.run',
+    color: '#34C759',
+    exercises: [
+      { name: 'Sentadilla Libre', setsCount: 3 },
+      { name: 'Press de Banca', setsCount: 3 },
+      { name: 'Remo con Barra', setsCount: 3 },
+      { name: 'Press Militar', setsCount: 3 },
+    ]
+  }
+];
 
+export default function EntrenarScreen() {
+  const router = useRouter();
+  const { isWorkoutActive, workoutName, workoutStartTime, startWorkout, endWorkout } = useAppContext();
+
+  const [exercises, setExercises] = useState<any[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+
+  const handleStartTemplate = (template: typeof WORKOUT_TEMPLATES[0]) => {
+    const loadedExercises = template.exercises.map((ex, i) => ({
+      id: `ex_${Date.now()}_${i}`,
+      name: ex.name,
+      sets: Array.from({ length: ex.setsCount }).map((_, j) => ({
+        id: `s_${Date.now()}_${i}_${j}`,
+        setNumber: j + 1,
+        weight: '',
+        reps: '',
+        completed: false
+      }))
+    }));
+    setExercises(loadedExercises);
+    startWorkout(template.name);
+  };
+
+  const handleStartEmpty = () => {
+    setExercises([]);
+    startWorkout('Entrenamiento Libre');
+  };
 
   const addSet = (exerciseId: string) => {
     setExercises(prevExercises => prevExercises.map(ex => {
@@ -108,11 +178,149 @@ export default function EntrenarScreen() {
     setExercises(prev => prev.filter(ex => ex.id !== exerciseId));
   };
 
+  const handleFinishWorkout = async () => {
+    let totalVolume = 0;
+    const completedExercises: any[] = [];
+
+    exercises.forEach(ex => {
+      const completedSets = ex.sets.filter(s => s.completed && s.weight && s.reps).map(s => {
+        const weightNum = parseFloat(s.weight);
+        const repsNum = parseInt(s.reps, 10);
+        totalVolume += weightNum * repsNum;
+        return {
+          id: s.id,
+          reps: repsNum,
+          weight: weightNum,
+          completed: true
+        };
+      });
+
+      if (completedSets.length > 0) {
+        completedExercises.push({
+          id: ex.id,
+          name: ex.name,
+          sets: completedSets
+        });
+      }
+    });
+
+    if (completedExercises.length === 0) {
+      Alert.alert("Error", "Debes completar al menos una serie para guardar el entrenamiento.");
+      return;
+    }
+
+    const endTime = new Date();
+    const durationSeconds = workoutStartTime ? Math.floor((endTime.getTime() - workoutStartTime.getTime()) / 1000) : 0;
+
+    // Formatting the date nicely
+    const dateOptions: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' };
+    const formattedDate = endTime.toLocaleDateString('es-ES', dateOptions);
+
+    const workout = {
+      id: Date.now().toString(),
+      name: workoutName,
+      date: formattedDate,
+      duration: durationSeconds,
+      volume: totalVolume,
+      exercises: completedExercises,
+      prs: Math.floor(Math.random() * 3) // Mocking PRs for now
+    };
+
+    try {
+      // 1. Obtener sesiones existentes
+      const storedWorkouts = await AsyncStorage.getItem('workouts');
+      const parsedWorkouts = storedWorkouts ? JSON.parse(storedWorkouts) : [];
+
+      // 2. Agregar la nueva sesión sin borrar las anteriores
+      const newWorkoutsList = [workout, ...parsedWorkouts];
+
+      // 3. Guardar usando la clave "workouts"
+      await AsyncStorage.setItem('workouts', JSON.stringify(newWorkoutsList));
+
+      // Reset state
+      setExercises([]);
+      endWorkout();
+
+      router.push('/historial');
+    } catch (error) {
+      console.error('Error saving workout:', error);
+      Alert.alert("Error", "No se pudo guardar el entrenamiento.");
+    }
+  };
+
+  const getWorkoutTimeStr = () => {
+    if (!workoutStartTime) return '0:00';
+    const now = new Date();
+    const diffSecs = Math.floor((now.getTime() - workoutStartTime.getTime()) / 1000);
+    const m = Math.floor(diffSecs / 60);
+    const s = diffSecs % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const handleChangeWorkout = () => {
+    Alert.alert(
+      "Cambiar entrenamiento",
+      "¿Estás seguro de que quieres cancelar este entrenamiento? Se perderá el progreso actual.",
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Sí, cambiar",
+          style: "destructive",
+          onPress: () => {
+            setExercises([]);
+            endWorkout();
+          }
+        }
+      ]
+    );
+  };
+
+  if (!isWorkoutActive) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Entrenar</Text>
+          <Text style={styles.subtitle}>Elige una plantilla o inicia libre</Text>
+        </View>
+
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.templatesContent}>
+          <Pressable style={styles.emptyWorkoutBtn} onPress={handleStartEmpty}>
+            <IconSymbol name="plus" size={24} color="#fff" />
+            <Text style={styles.emptyWorkoutText}>Entrenamiento Libre</Text>
+          </Pressable>
+
+          <Text style={styles.templatesSectionTitle}>Plantillas Sugeridas</Text>
+
+          <View style={styles.templatesGrid}>
+            {WORKOUT_TEMPLATES.map((template) => (
+              <Pressable
+                key={template.id}
+                style={styles.templateCard}
+                onPress={() => handleStartTemplate(template)}
+              >
+                <View style={[styles.templateIconBox, { backgroundColor: template.color }]}>
+                  <IconSymbol name={template.icon as any} size={24} color="#fff" />
+                </View>
+                <Text style={styles.templateName}>{template.name}</Text>
+                <Text style={styles.templateDetails}>{template.exercises.length} Ejercicios</Text>
+              </Pressable>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+    );
+  }
+
   return (
-    <View style={[styles.container, isDark && styles.containerDark]}>
-      <View style={[styles.header, isDark && styles.headerDark]}>
-        <Text style={[styles.title, isDark && styles.textDark]}>Día de Pierna</Text>
-        <Text style={styles.subtitle}>En progreso • 15:42</Text>
+    <View style={styles.container}>
+      <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+        <View>
+          <Text style={styles.title}>{workoutName}</Text>
+          <Text style={styles.subtitle}>En progreso • {getWorkoutTimeStr()}</Text>
+        </View>
+        <Pressable onPress={handleChangeWorkout} style={styles.changeBtn}>
+          <Text style={styles.changeBtnText}>Cambiar</Text>
+        </Pressable>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
@@ -132,40 +340,64 @@ export default function EntrenarScreen() {
               <Text style={[styles.colCheck, isDark && styles.colDark]}>✓</Text>
             </View>
 
-            {exercise.sets.map((set) => (
-              <View key={set.id} style={set.completed ? [styles.rowCompleted, isDark && styles.rowCompletedDark] : [styles.rowPending, isDark && styles.rowPendingDark]}>
-                <Pressable onPress={() => removeSet(exercise.id, set.id)} style={{ flex: 1, alignItems: 'center' }}>
-                  <Text style={[styles.cellSet, isDark && styles.colDark]}>{set.setNumber}</Text>
-                </Pressable>
+            {exercise.sets.map((set: any) => {
+              const renderRightActions = (progress: any, dragX: any) => {
+                const trans = dragX.interpolate({
+                  inputRange: [-80, 0],
+                  outputRange: [1, 0],
+                  extrapolate: 'clamp',
+                });
+                return (
+                  <Pressable style={styles.deleteAction} onPress={() => removeSet(exercise.id, set.id)}>
+                    <Animated.View style={{ transform: [{ scale: trans }] }}>
+                      <IconSymbol name="trash" size={24} color="#fff" />
+                    </Animated.View>
+                  </Pressable>
+                );
+              };
 
-                <TextInput
-                  style={[styles.inputCell, isDark && styles.inputCellDark, styles.cellWeight, set.completed && styles.inputCompleted, set.completed && isDark && styles.inputCompletedDark]}
-                  value={set.weight}
-                  onChangeText={(val) => updateSet(exercise.id, set.id, 'weight', val)}
-                  keyboardType="numeric"
-                  placeholder="-"
-                  placeholderTextColor={isDark ? "#666" : "#999"}
-                  editable={!set.completed}
-                />
-
-                <TextInput
-                  style={[styles.inputCell, isDark && styles.inputCellDark, styles.cellReps, set.completed && styles.inputCompleted, set.completed && isDark && styles.inputCompletedDark]}
-                  value={set.reps}
-                  onChangeText={(val) => updateSet(exercise.id, set.id, 'reps', val)}
-                  keyboardType="numeric"
-                  placeholder="-"
-                  placeholderTextColor={isDark ? "#666" : "#999"}
-                  editable={!set.completed}
-                />
-
-                <Pressable
-                  style={set.completed ? styles.checkDone : [styles.checkPending, isDark && styles.checkPendingDark]}
-                  onPress={() => toggleSetComplete(exercise.id, set.id)}
+              return (
+                <Swipeable
+                  key={set.id}
+                  renderRightActions={renderRightActions}
+                  overshootRight={false}
+                  friction={2}
                 >
-                  <IconSymbol name={set.completed ? "checkmark" : "timer"} size={14} color={set.completed ? "#fff" : (isDark ? "#999" : "#666")} />
-                </Pressable>
-              </View>
-            ))}
+                  <View style={set.completed ? styles.rowCompleted : styles.rowPending}>
+                    <View style={{ flex: 1, alignItems: 'center' }}>
+                      <Text style={styles.cellSet}>{set.setNumber}</Text>
+                    </View>
+
+                    <TextInput
+                      style={[styles.inputCell, styles.cellWeight, set.completed && styles.inputCompleted]}
+                      value={set.weight}
+                      onChangeText={(val) => updateSet(exercise.id, set.id, 'weight', val)}
+                      keyboardType="numeric"
+                      placeholder="-"
+                      placeholderTextColor="#999"
+                      editable={!set.completed}
+                    />
+
+                    <TextInput
+                      style={[styles.inputCell, styles.cellReps, set.completed && styles.inputCompleted]}
+                      value={set.reps}
+                      onChangeText={(val) => updateSet(exercise.id, set.id, 'reps', val)}
+                      keyboardType="numeric"
+                      placeholder="-"
+                      placeholderTextColor="#999"
+                      editable={!set.completed}
+                    />
+
+                    <Pressable
+                      style={set.completed ? styles.checkDone : styles.checkPending}
+                      onPress={() => toggleSetComplete(exercise.id, set.id)}
+                    >
+                      <IconSymbol name={set.completed ? "checkmark" : "timer"} size={14} color={set.completed ? "#fff" : "#666"} />
+                    </Pressable>
+                  </View>
+                </Swipeable>
+              );
+            })}
 
             <Pressable style={styles.addSetButton} onPress={() => addSet(exercise.id)}>
               <Text style={styles.addSetText}>+ Añadir serie</Text>
@@ -178,8 +410,8 @@ export default function EntrenarScreen() {
         </Pressable>
       </ScrollView>
 
-      <View style={[styles.footer, isDark && styles.footerDark]}>
-        <Pressable style={styles.finishButton}>
+      <View style={styles.footer}>
+        <Pressable style={styles.finishButton} onPress={handleFinishWorkout}>
           <Text style={styles.finishButtonText}>Finalizar Entrenamiento</Text>
         </Pressable>
       </View>
@@ -349,6 +581,18 @@ const styles = StyleSheet.create({
   cellWeight: { flex: 2 },
   cellReps: { flex: 2 },
 
+  changeBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#FFF0F0',
+    borderRadius: 8,
+  },
+  changeBtnText: {
+    color: '#FF3B30',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+
   checkDone: {
     flex: 1,
     alignItems: 'center',
@@ -369,8 +613,14 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginHorizontal: 'auto',
   },
-  checkPendingDark: {
-    backgroundColor: '#444',
+  deleteAction: {
+    backgroundColor: '#FF3B30',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 80,
+    marginVertical: 4,
+    borderRadius: 8,
+    marginLeft: 8,
   },
 
   addSetButton: {
@@ -460,6 +710,72 @@ const styles = StyleSheet.create({
   modalItemText: {
     fontSize: 16,
     color: '#333',
+  },
+  templatesContent: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  emptyWorkoutBtn: {
+    flexDirection: 'row',
+    backgroundColor: '#4A90E2',
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 32,
+    shadowColor: '#4A90E2',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  emptyWorkoutText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  templatesSectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 16,
+  },
+  templatesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  templateCard: {
+    backgroundColor: '#fff',
+    width: '47%',
+    padding: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  templateIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  templateName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  templateDetails: {
+    fontSize: 12,
+    color: '#666',
   },
 });
 
