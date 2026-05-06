@@ -6,11 +6,15 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { useAppContext } from '@/app/context/AppContext';
 import { EXERCISES } from '@/app/(tabs)/ejercicios';
 import { ProgresoModal } from '@/components/ProgresoModal';
+import { useThemeContext } from '@/context/ThemeContext';
+import WaterTracker from '@/components/WaterTracker';
 
 export default function InicioScreen() {
   const router = useRouter();
   const { timerTimeLeft, isTimerActive, isWorkoutActive, workoutName, workoutStartTime } = useAppContext();
+  const { isDark, toggleTheme } = useThemeContext();
 
+  const [userName, setUserName] = useState('Usuario');
   const [workoutsCount, setWorkoutsCount] = useState(0);
   const [activeMinutes, setActiveMinutes] = useState(0);
   const [lastWorkoutDate, setLastWorkoutDate] = useState('Ninguno');
@@ -18,6 +22,12 @@ export default function InicioScreen() {
 
   const loadStats = async () => {
     try {
+      const profile = await AsyncStorage.getItem('userProfile');
+      if (profile) {
+        const parsed = JSON.parse(profile);
+        if (parsed.name) setUserName(parsed.name);
+      }
+
       const storedWorkouts = await AsyncStorage.getItem('workouts');
       if (storedWorkouts) {
         const parsedWorkouts = JSON.parse(storedWorkouts);

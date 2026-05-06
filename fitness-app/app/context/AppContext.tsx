@@ -32,7 +32,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Timer Effect
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (isTimerActive && timerTimeLeft > 0) {
       interval = setInterval(() => {
         setTimerTimeLeft((time) => time - 1);

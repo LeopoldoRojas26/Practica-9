@@ -82,7 +82,7 @@ export default function HistorialDetailScreen() {
 
         <Text style={styles.sectionTitle}>Ejercicios Realizados</Text>
 
-        {workout.exercises.map((ex, index) => (
+        {workout.exercises.map((ex: any, index: number) => (
           <View key={ex.id} style={styles.exerciseCard}>
             <Text style={styles.exerciseName}>{index + 1}. {ex.name}</Text>
             
@@ -92,7 +92,7 @@ export default function HistorialDetailScreen() {
               <Text style={styles.colReps}>Reps</Text>
             </View>
 
-            {ex.sets.map((set, sIndex) => (
+            {ex.sets.map((set: any, sIndex: number) => (
               <View key={set.id} style={styles.row}>
                 <Text style={styles.cellSet}>{sIndex + 1}</Text>
                 <Text style={styles.cellWeight}>{set.weight}</Text>

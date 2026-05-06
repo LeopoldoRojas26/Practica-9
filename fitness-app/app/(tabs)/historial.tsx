@@ -3,8 +3,10 @@ import { StyleSheet, ScrollView, View, Text, Pressable } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { useThemeContext } from '@/context/ThemeContext';
 
 export default function HistorialScreen() {
+  const { isDark } = useThemeContext();
   const [workouts, setWorkouts] = useState<any[]>([]);
   const router = useRouter();
 
@@ -118,6 +120,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  textDark: {
+    color: '#FFF',
   },
   title: {
     fontSize: 28,

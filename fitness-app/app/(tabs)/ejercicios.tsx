@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, ScrollView, View, Text, Pressable, TextInput, Modal, Dimensions } from 'react-native';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { useThemeContext } from '@/context/ThemeContext';
 
 const { height } = Dimensions.get('window');
 
@@ -268,6 +269,7 @@ export const EXERCISES: Exercise[] = [
 ];
 
 export default function EjerciciosScreen() {
+  const { isDark } = useThemeContext();
   const categories = ['Todos', 'Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core'];
 
   const [searchQuery, setSearchQuery] = useState('');

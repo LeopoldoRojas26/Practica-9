@@ -5,6 +5,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useAppContext } from '@/app/context/AppContext';
+import { useThemeContext } from '@/context/ThemeContext';
 
 const mockExercisesCatalog = [
   { id: 1, name: 'Press de Banca' },
@@ -83,6 +84,7 @@ const WORKOUT_TEMPLATES = [
 export default function EntrenarScreen() {
   const router = useRouter();
   const { isWorkoutActive, workoutName, workoutStartTime, startWorkout, endWorkout } = useAppContext();
+  const { isDark } = useThemeContext();
 
   const [exercises, setExercises] = useState<any[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
@@ -133,7 +135,7 @@ export default function EntrenarScreen() {
       if (ex.id === exerciseId) {
         return {
           ...ex,
-          sets: ex.sets.map(s => s.id === setId ? { ...s, [field]: value } : s)
+          sets: ex.sets.map((s: any) => s.id === setId ? { ...s, [field]: value } : s)
         };
       }
       return ex;
@@ -145,7 +147,7 @@ export default function EntrenarScreen() {
       if (ex.id === exerciseId) {
         return {
           ...ex,
-          sets: ex.sets.map(s => s.id === setId ? { ...s, completed: !s.completed } : s)
+          sets: ex.sets.map((s: any) => s.id === setId ? { ...s, completed: !s.completed } : s)
         };
       }
       return ex;
@@ -155,7 +157,7 @@ export default function EntrenarScreen() {
   const removeSet = (exerciseId: string, setId: string) => {
     setExercises(prevExercises => prevExercises.map(ex => {
       if (ex.id === exerciseId) {
-        const newSets = ex.sets.filter(s => s.id !== setId).map((s, idx) => ({ ...s, setNumber: idx + 1 }));
+        const newSets = ex.sets.filter((s: any) => s.id !== setId).map((s: any, idx: number) => ({ ...s, setNumber: idx + 1 }));
         return { ...ex, sets: newSets };
       }
       return ex;
@@ -183,7 +185,7 @@ export default function EntrenarScreen() {
     const completedExercises: any[] = [];
 
     exercises.forEach(ex => {
-      const completedSets = ex.sets.filter(s => s.completed && s.weight && s.reps).map(s => {
+      const completedSets = ex.sets.filter((s: any) => s.completed && s.weight && s.reps).map((s: any) => {
         const weightNum = parseFloat(s.weight);
         const repsNum = parseInt(s.reps, 10);
         totalVolume += weightNum * repsNum;
